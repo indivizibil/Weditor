@@ -1,0 +1,40 @@
+name: Build WeddingCut Pro EXE
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installa Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Installa dipendenze
+        working-directory: video-editor
+        run: |
+          python -m pip install --upgrade pip
+          pip install customtkinter faster-whisper librosa opencv-python numpy pyinstaller
+
+      - name: Build EXE
+        working-directory: video-editor
+        run: |
+          pyinstaller main.py --name WeddingCutPro --windowed --onedir --clean --noconfirm --hidden-import customtkinter --hidden-import faster_whisper --hidden-import librosa --hidden-import cv2 --hidden-import numpy --add-data "analyzer.py;." --add-data "timeline.py;." --add-data "exporter.py;."
+
+      - name: Crea ZIP
+        working-directory: video-editor
+        run: Compress-Archive -Path dist\WeddingCutPro\* -DestinationPath WeddingCutPro.zip
+        shell: pwsh
+
+      - name: Carica artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WeddingCutPro-Windows
+          path: video-editor/WeddingCutPro.zip
+          retention-days: 30
